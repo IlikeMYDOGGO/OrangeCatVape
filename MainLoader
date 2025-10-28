@@ -19,8 +19,60 @@ getgenv().catuser = getgenv().username
 local cloneref = cloneref or function(ref) return ref end
 local gethui = gethui or function() return game:GetService('Players').LocalPlayer.PlayerGui end
 local tweenService = game:GetService('TweenService')
+local lighting = game:GetService('Lighting')
 
--- UNIVERSAL ORANGE THEME INJECTOR --
+-- SMOOTH CREAMY ORANGE ATMOSPHERE/SHADERS --
+local function setupDreamyAtmosphere()
+	pcall(function()
+		-- Create smooth orange atmosphere
+		local atmosphere = lighting:FindFirstChildOfClass('Atmosphere') or Instance.new('Atmosphere', lighting)
+		atmosphere.Density = 0.45
+		atmosphere.Offset = 0.35
+		atmosphere.Color = Color3.fromRGB(255, 160, 100)
+		atmosphere.Decay = Color3.fromRGB(255, 140, 80)
+		atmosphere.Glare = 0.4
+		atmosphere.Haze = 2.5
+		
+		-- Smooth creamy lighting
+		local bloom = lighting:FindFirstChildOfClass('BloomEffect') or Instance.new('BloomEffect', lighting)
+		bloom.Intensity = 0.8
+		bloom.Size = 32
+		bloom.Threshold = 0.6
+		
+		-- Warm color correction
+		local colorCorrection = lighting:FindFirstChildOfClass('ColorCorrectionEffect') or Instance.new('ColorCorrectionEffect', lighting)
+		colorCorrection.Brightness = 0.05
+		colorCorrection.Contrast = 0.1
+		colorCorrection.Saturation = 0.2
+		colorCorrection.TintColor = Color3.fromRGB(255, 220, 180)
+		
+		-- Smooth blur for dreamy effect
+		local blur = lighting:FindFirstChildOfClass('BlurEffect') or Instance.new('BlurEffect', lighting)
+		blur.Size = 2
+		
+		-- Smooth transitions
+		tweenService:Create(atmosphere, TweenInfo.new(3, Enum.EasingStyle.Sine), {
+			Density = 0.45,
+			Haze = 2.5
+		}):Play()
+		
+		tweenService:Create(bloom, TweenInfo.new(3, Enum.EasingStyle.Sine), {
+			Intensity = 0.8
+		}):Play()
+		
+		-- Animate for creamy smooth effect
+		task.spawn(function()
+			while bloom.Parent do
+				tweenService:Create(bloom, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+					Intensity = 1.2
+				}):Play()
+				break
+			end
+		end)
+	end)
+end
+
+-- UNIVERSAL ORANGE THEME INJECTOR (NON-BLOCKING) --
 local function applyOrangeTheme(object)
 	if not object then return end
 	
@@ -28,47 +80,65 @@ local function applyOrangeTheme(object)
 		if object:IsA('GuiObject') then
 			-- Apply orange theme to backgrounds
 			if object:IsA('Frame') or object:IsA('TextButton') or object:IsA('TextBox') or object:IsA('ImageButton') then
-				if object.BackgroundTransparency < 1 then
+				if object.BackgroundTransparency < 1 and object.BackgroundTransparency > 0 then
 					local originalColor = object.BackgroundColor3
 					local brightness = (originalColor.R + originalColor.G + originalColor.B) / 3
 					
 					if brightness < 0.3 then
-						object.BackgroundColor3 = Color3.fromRGB(40, 25, 15)
+						object.BackgroundColor3 = Color3.fromRGB(45, 28, 18)
 					elseif brightness < 0.6 then
-						object.BackgroundColor3 = Color3.fromRGB(80, 50, 30)
+						object.BackgroundColor3 = Color3.fromRGB(90, 55, 35)
 					else
-						object.BackgroundColor3 = Color3.fromRGB(255, 140, 60)
+						object.BackgroundColor3 = Color3.fromRGB(255, 150, 70)
 					end
 				end
 			end
 			
-			-- Apply orange to text
+			-- Apply creamy orange to text
 			if object:IsA('TextLabel') or object:IsA('TextButton') or object:IsA('TextBox') then
 				local originalColor = object.TextColor3
 				local brightness = (originalColor.R + originalColor.G + originalColor.B) / 3
 				
 				if brightness > 0.5 then
-					object.TextColor3 = Color3.fromRGB(255, 200, 150)
+					object.TextColor3 = Color3.fromRGB(255, 210, 160)
 				else
-					object.TextColor3 = Color3.fromRGB(255, 160, 100)
+					object.TextColor3 = Color3.fromRGB(255, 170, 110)
 				end
 			end
 			
-			-- Apply orange to images
+			-- Apply smooth orange to images
 			if object:IsA('ImageLabel') or object:IsA('ImageButton') then
 				if object.ImageColor3 ~= Color3.new(1, 1, 1) then
-					object.ImageColor3 = Color3.fromRGB(255, 140, 60)
+					local originalColor = object.ImageColor3
+					local brightness = (originalColor.R + originalColor.G + originalColor.B) / 3
+					
+					if brightness < 0.5 then
+						object.ImageColor3 = Color3.fromRGB(255, 150, 80)
+					end
 				end
 			end
 			
-			-- Add orange glow to frames
-			if object:IsA('Frame') and not object:FindFirstChild('OrangeGlow') then
-				local glow = Instance.new('UIStroke')
-				glow.Name = 'OrangeGlow'
-				glow.Color = Color3.fromRGB(255, 140, 60)
-				glow.Thickness = 1
-				glow.Transparency = 0.6
-				glow.Parent = object
+			-- Add smooth orange glow to frames
+			if (object:IsA('Frame') or object:IsA('TextButton') or object:IsA('ImageButton')) and not object:FindFirstChild('OrangeCreamyGlow') then
+				if object.BackgroundTransparency < 0.95 then
+					local glow = Instance.new('UIStroke')
+					glow.Name = 'OrangeCreamyGlow'
+					glow.Color = Color3.fromRGB(255, 150, 80)
+					glow.Thickness = 1
+					glow.Transparency = 0.7
+					glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+					glow.Parent = object
+					
+					-- Smooth pulsing glow
+					task.spawn(function()
+						while glow.Parent do
+							tweenService:Create(glow, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+								Transparency = 0.4
+							}):Play()
+							break
+						end
+					end)
+				end
 			end
 		end
 	end)
@@ -80,64 +150,81 @@ local function recursiveApplyTheme(parent)
 	end
 end
 
--- Hook into all new GUIs being created
+-- Hook into all new GUIs being created (NON-BLOCKING)
 local function setupUniversalTheme()
-	-- Apply to existing GUIs
-	for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
-		if player:FindFirstChild('PlayerGui') then
-			recursiveApplyTheme(player.PlayerGui)
-		end
-	end
-	
-	recursiveApplyTheme(gethui())
-	
-	-- Monitor for new GUI elements
-	local function monitorContainer(container)
-		container.DescendantAdded:Connect(function(descendant)
-			task.wait(0.1)
-			applyOrangeTheme(descendant)
-		end)
+	task.spawn(function()
+		-- Wait for game to fully load
+		task.wait(1)
 		
-		for _, child in ipairs(container:GetDescendants()) do
-			applyOrangeTheme(child)
+		-- Apply to existing GUIs
+		for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
+			if player:FindFirstChild('PlayerGui') then
+				recursiveApplyTheme(player.PlayerGui)
+			end
 		end
-	end
-	
-	-- Monitor PlayerGui
-	for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
-		if player:FindFirstChild('PlayerGui') then
-			monitorContainer(player.PlayerGui)
+		
+		-- Don't apply to gethui yet to avoid blocking loader
+		
+		-- Monitor for new GUI elements
+		local function monitorContainer(container)
+			container.DescendantAdded:Connect(function(descendant)
+				task.wait(0.05)
+				applyOrangeTheme(descendant)
+			end)
 		end
-	end
+		
+		-- Monitor PlayerGui
+		for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
+			if player:FindFirstChild('PlayerGui') then
+				monitorContainer(player.PlayerGui)
+			end
+		end
+		
+		-- Monitor gethui for NEW scripts (not the loader)
+		task.wait(3)
+		monitorContainer(gethui())
+		
+		-- Apply theme to gethui after loader is done
+		task.wait(2)
+		recursiveApplyTheme(gethui())
+	end)
 	
-	-- Monitor gethui
-	monitorContainer(gethui())
-	
-	-- Monitor new scripts/guis
-	game:GetService('Players').LocalPlayer.PlayerGui.DescendantAdded:Connect(function(descendant)
-		task.wait(0.1)
-		applyOrangeTheme(descendant)
+	-- Keep theme persistent
+	task.spawn(function()
+		while task.wait(8) do
+			pcall(function()
+				for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
+					if player:FindFirstChild('PlayerGui') then
+						for _, gui in ipairs(player.PlayerGui:GetDescendants()) do
+							if gui:IsA('GuiObject') and not gui:FindFirstChild('OrangeCreamyGlow') then
+								applyOrangeTheme(gui)
+							end
+						end
+					end
+				end
+			end)
+		end
 	end)
 end
 
 -- Global function to apply theme on demand
 getgenv().applyOrangeTheme = function()
-	setupUniversalTheme()
+	recursiveApplyTheme(game:GetService('Players').LocalPlayer.PlayerGui)
+	recursiveApplyTheme(gethui())
 end
 
--- AUTO APPLY ON LOAD
+-- AUTO APPLY ATMOSPHERE AND THEME (AFTER LOADER COMPLETES)
 task.spawn(function()
-	task.wait(2)
+	setupDreamyAtmosphere()
+end)
+
+task.spawn(function()
 	setupUniversalTheme()
-	
-	-- Keep reapplying for persistent theme
-	while task.wait(5) do
-		pcall(setupUniversalTheme)
-	end
 end)
 
 local gui : ScreenGui = Instance.new('ScreenGui', gethui())
 gui.Enabled = not closet
+gui.ResetOnSpawn = false
 
 local stages = {
 	UDim2.new(0, 50, 1, 0),
@@ -168,11 +255,12 @@ local function getAsset(v)
 end
 
 if gui.Enabled then
-	-- DREAMY ORANGE SKYBOX BACKGROUND --
+	-- SEMI-TRANSPARENT DREAMY ORANGE SKYBOX BACKGROUND (Won't block screen) --
 	local skybox = createinstance('Frame', {
 		Name = 'Skybox',
 		Parent = gui,
 		BackgroundColor3 = Color3.fromRGB(255, 140, 60),
+		BackgroundTransparency = 0.85,
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = 0
@@ -186,16 +274,16 @@ if gui.Enabled then
 	}
 	skyGradient.Rotation = 45
 	
-	-- HAZY GLOW EFFECT --
-	for i = 1, 3 do
+	-- SMOOTH CREAMY HAZY GLOW EFFECTS --
+	for i = 1, 4 do
 		local glow = createinstance('Frame', {
-			Name = 'Glow'..i,
+			Name = 'CreamyGlow'..i,
 			Parent = skybox,
-			BackgroundColor3 = Color3.fromRGB(255, 180, 100),
-			BackgroundTransparency = 0.7,
+			BackgroundColor3 = Color3.fromRGB(255, 190, 120),
+			BackgroundTransparency = 0.85,
 			BorderSizePixel = 0,
-			Position = UDim2.fromScale(math.random(20, 80) / 100, math.random(20, 80) / 100),
-			Size = UDim2.fromOffset(300 + i * 50, 300 + i * 50),
+			Position = UDim2.fromScale(math.random(15, 85) / 100, math.random(15, 85) / 100),
+			Size = UDim2.fromOffset(250 + i * 70, 250 + i * 70),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			ZIndex = 0
 		})
@@ -203,24 +291,39 @@ if gui.Enabled then
 		local glowCorner = Instance.new('UICorner', glow)
 		glowCorner.CornerRadius = UDim.new(1, 0)
 		
-		-- Animate glow
+		local glowGradient = Instance.new('UIGradient', glow)
+		glowGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 200, 140)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 100)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 140, 80))
+		}
+		glowGradient.Rotation = i * 30
+		
+		-- Smooth creamy animation
 		task.spawn(function()
+			task.wait(i * 0.3)
 			while glow.Parent do
-				tweenService:Create(glow, TweenInfo.new(4 + i, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-					BackgroundTransparency = 0.4 + i * 0.1,
-					Size = UDim2.fromOffset(250 + i * 60, 250 + i * 60)
+				tweenService:Create(glow, TweenInfo.new(5 + i * 0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+					BackgroundTransparency = 0.75,
+					Size = UDim2.fromOffset(220 + i * 80, 220 + i * 80),
+					Rotation = 360
 				}):Play()
-				task.wait(0.1)
+				
+				tweenService:Create(glowGradient, TweenInfo.new(6 + i, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+					Rotation = glowGradient.Rotation + 360
+				}):Play()
+				
+				break
 			end
 		end)
 	end
 
-	-- MAIN CONTAINER WITH ORANGE THEME --
+	-- MAIN CONTAINER WITH SMOOTH ORANGE THEME --
 	local mainFrame = createinstance('Frame', {
 		Name = 'Main',
 		Parent = gui,
-		BackgroundColor3 = Color3.fromRGB(40, 25, 15),
-		BackgroundTransparency = 0.15,
+		BackgroundColor3 = Color3.fromRGB(45, 28, 18),
+		BackgroundTransparency = 0.1,
 		Size = UDim2.fromOffset(685, 399),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -228,21 +331,22 @@ if gui.Enabled then
 	})
 	
 	local mainCorner = Instance.new('UICorner', mainFrame)
-	mainCorner.CornerRadius = UDim.new(0, 12)
+	mainCorner.CornerRadius = UDim.new(0, 16)
 	
-	-- ORANGE GLOW BORDER --
+	-- SMOOTH CREAMY ORANGE GLOW BORDER --
 	local borderGlow = Instance.new('UIStroke', mainFrame)
-	borderGlow.Color = Color3.fromRGB(255, 140, 60)
-	borderGlow.Thickness = 2
-	borderGlow.Transparency = 0.3
+	borderGlow.Color = Color3.fromRGB(255, 160, 90)
+	borderGlow.Thickness = 2.5
+	borderGlow.Transparency = 0.4
 	
-	-- Animate border glow
+	-- Smooth pulsing animation
 	task.spawn(function()
 		while borderGlow.Parent do
-			tweenService:Create(borderGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
-				Transparency = 0.1
+			tweenService:Create(borderGlow, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+				Transparency = 0.15,
+				Thickness = 3
 			}):Play()
-			task.wait(0.1)
+			break
 		end
 	end)
 
@@ -254,7 +358,7 @@ if gui.Enabled then
 		Position = UDim2.fromOffset(624, 23),
 		Size = UDim2.fromOffset(40, 30),
 		AutoButtonColor = false,
-		ImageColor3 = Color3.fromRGB(255, 120, 50),
+		ImageColor3 = Color3.fromRGB(255, 130, 60),
 		Image = 'rbxassetid://110629770884920',
 		ScaleType = Enum.ScaleType.Fit
 	})
@@ -266,8 +370,8 @@ if gui.Enabled then
 		Position = UDim2.new(0, 10, 0.5, 0),
 		Size = UDim2.fromOffset(16, 16),
 		AnchorPoint = Vector2.new(0, 0.5),
-		ImageTransparency = 0.2,
-		ImageColor3 = Color3.fromRGB(255, 160, 80),
+		ImageTransparency = 0.1,
+		ImageColor3 = Color3.fromRGB(255, 180, 100),
 		Image = 'rbxassetid://128518278755224',
 		ScaleType = Enum.ScaleType.Fit
 	})
@@ -280,7 +384,7 @@ if gui.Enabled then
 		Position = UDim2.fromOffset(582, 23),
 		Size = UDim2.fromOffset(40, 30),
 		AutoButtonColor = false,
-		ImageColor3 = Color3.fromRGB(255, 120, 50),
+		ImageColor3 = Color3.fromRGB(255, 130, 60),
 		Image = 'rbxassetid://133363055871405',
 		ScaleType = Enum.ScaleType.Fit
 	})
@@ -292,8 +396,8 @@ if gui.Enabled then
 		Position = UDim2.new(0, 14, 0.5, 0),
 		Size = UDim2.fromOffset(16, 16),
 		AnchorPoint = Vector2.new(0, 0.5),
-		ImageTransparency = 0.2,
-		ImageColor3 = Color3.fromRGB(255, 160, 80),
+		ImageTransparency = 0.1,
+		ImageColor3 = Color3.fromRGB(255, 180, 100),
 		Image = 'rbxassetid://83568668289707',
 		ScaleType = Enum.ScaleType.Fit
 	})
@@ -307,7 +411,7 @@ if gui.Enabled then
 		Position = UDim2.fromScale(0.48, 0.31),
 		Size = UDim2.fromOffset(70, 70),
 		Image = 'rbxassetid://84228868064393',
-		ImageColor3 = Color3.fromRGB(255, 140, 60),
+		ImageColor3 = Color3.fromRGB(255, 150, 70),
 		ScaleType = Enum.ScaleType.Fit
 	})
 
@@ -318,16 +422,16 @@ if gui.Enabled then
 		Position = UDim2.fromScale(1, 0.3),
 		Size = UDim2.fromOffset(29, 29),
 		Image = 'rbxassetid://138794287840926',
-		ImageColor3 = Color3.fromRGB(255, 180, 100),
+		ImageColor3 = Color3.fromRGB(255, 190, 120),
 		ScaleType = Enum.ScaleType.Fit
 	})
 
-	-- LOAD BAR --
+	-- SMOOTH LOAD BAR --
 	createinstance('Frame', {
 		Name = 'loadbar',
 		Parent = mainFrame,
 		AnchorPoint = Vector2.new(0.5, 0.53),
-		BackgroundColor3 = Color3.fromRGB(30, 20, 10),
+		BackgroundColor3 = Color3.fromRGB(35, 22, 12),
 		BorderSizePixel = 0,
 		Position = UDim2.fromScale(0.5, 0.53),
 		Size = UDim2.fromOffset(240, 6)
@@ -336,19 +440,28 @@ if gui.Enabled then
 	createinstance('Frame', {
 		Name = 'fullbar',
 		Parent = mainFrame.loadbar,
-		BackgroundColor3 = Color3.fromRGB(255, 140, 60),
+		BackgroundColor3 = Color3.fromRGB(255, 150, 70),
 		BorderSizePixel = 0,
 		Size = UDim2.new(0, 0, 1, 0),
 		ZIndex = 2
 	})
 	
-	-- PROGRESS BAR GLOW --
+	-- SMOOTH CREAMY PROGRESS BAR GLOW --
 	local barGlow = Instance.new('UIStroke', mainFrame.loadbar.fullbar)
-	barGlow.Color = Color3.fromRGB(255, 180, 100)
-	barGlow.Thickness = 1.5
-	barGlow.Transparency = 0.5
+	barGlow.Color = Color3.fromRGB(255, 190, 110)
+	barGlow.Thickness = 2
+	barGlow.Transparency = 0.4
+	
+	task.spawn(function()
+		while barGlow.Parent do
+			tweenService:Create(barGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+				Transparency = 0.2
+			}):Play()
+			break
+		end
+	end)
 
-	-- ACTION TEXT --
+	-- CREAMY ACTION TEXT --
 	createinstance('TextLabel', {
 		Name = 'action',
 		Parent = mainFrame,
@@ -357,9 +470,9 @@ if gui.Enabled then
 		Size = UDim2.fromOffset(200, 15),
 		Font = Enum.Font.Arial,
 		Text = '',
-		TextColor3 = Color3.fromRGB(255, 200, 150),
+		TextColor3 = Color3.fromRGB(255, 210, 160),
 		TextSize = 12,
-		TextTransparency = 0.2
+		TextTransparency = 0.15
 	})
 
 	Instance.new('UICorner', mainFrame.loadbar).CornerRadius = UDim.new(1, 0)
@@ -520,9 +633,12 @@ elseif not closet then
 	loadstring(downloadFile('catrewrite/libraries/announcements.lua'), 'announcements.lua')()
 end
 
--- NOTIFICATION: Theme Applied
-game:GetService('StarterGui'):SetCore('SendNotification', {
-	Title = '🍊 Orange Theme Active',
-	Text = 'Universal orange theme injected! All future GUIs will be orange.',
-	Duration = 5
-})
+-- NOTIFICATION: Theme Applied (after loader completes)
+task.spawn(function()
+	task.wait(5)
+	game:GetService('StarterGui'):SetCore('SendNotification', {
+		Title = '🍊 Creamy Orange Theme Active',
+		Text = 'Smooth dreamy shaders & universal orange theme applied!',
+		Duration = 5
+	})
+end)
