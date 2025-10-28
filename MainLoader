@@ -1,0 +1,528 @@
+local loadonscreen = not game:IsLoaded()
+
+repeat
+	task.wait()
+until game:IsLoaded()
+
+if shared.vape then
+	shared.vape:Uninject()
+end
+
+local license = ({...})[1] or {}
+local developer = getgenv().catvapedev or license.Developer or false
+local closet = getgenv().closet or license.Closet or false
+
+getgenv().username = username or license.Username
+getgenv().password = password or license.Password
+getgenv().catuser = getgenv().username
+
+local cloneref = cloneref or function(ref) return ref end
+local gethui = gethui or function() return game:GetService('Players').LocalPlayer.PlayerGui end
+local tweenService = game:GetService('TweenService')
+
+-- UNIVERSAL ORANGE THEME INJECTOR --
+local function applyOrangeTheme(object)
+	if not object then return end
+	
+	pcall(function()
+		if object:IsA('GuiObject') then
+			-- Apply orange theme to backgrounds
+			if object:IsA('Frame') or object:IsA('TextButton') or object:IsA('TextBox') or object:IsA('ImageButton') then
+				if object.BackgroundTransparency < 1 then
+					local originalColor = object.BackgroundColor3
+					local brightness = (originalColor.R + originalColor.G + originalColor.B) / 3
+					
+					if brightness < 0.3 then
+						object.BackgroundColor3 = Color3.fromRGB(40, 25, 15)
+					elseif brightness < 0.6 then
+						object.BackgroundColor3 = Color3.fromRGB(80, 50, 30)
+					else
+						object.BackgroundColor3 = Color3.fromRGB(255, 140, 60)
+					end
+				end
+			end
+			
+			-- Apply orange to text
+			if object:IsA('TextLabel') or object:IsA('TextButton') or object:IsA('TextBox') then
+				local originalColor = object.TextColor3
+				local brightness = (originalColor.R + originalColor.G + originalColor.B) / 3
+				
+				if brightness > 0.5 then
+					object.TextColor3 = Color3.fromRGB(255, 200, 150)
+				else
+					object.TextColor3 = Color3.fromRGB(255, 160, 100)
+				end
+			end
+			
+			-- Apply orange to images
+			if object:IsA('ImageLabel') or object:IsA('ImageButton') then
+				if object.ImageColor3 ~= Color3.new(1, 1, 1) then
+					object.ImageColor3 = Color3.fromRGB(255, 140, 60)
+				end
+			end
+			
+			-- Add orange glow to frames
+			if object:IsA('Frame') and not object:FindFirstChild('OrangeGlow') then
+				local glow = Instance.new('UIStroke')
+				glow.Name = 'OrangeGlow'
+				glow.Color = Color3.fromRGB(255, 140, 60)
+				glow.Thickness = 1
+				glow.Transparency = 0.6
+				glow.Parent = object
+			end
+		end
+	end)
+end
+
+local function recursiveApplyTheme(parent)
+	for _, child in ipairs(parent:GetDescendants()) do
+		applyOrangeTheme(child)
+	end
+end
+
+-- Hook into all new GUIs being created
+local function setupUniversalTheme()
+	-- Apply to existing GUIs
+	for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
+		if player:FindFirstChild('PlayerGui') then
+			recursiveApplyTheme(player.PlayerGui)
+		end
+	end
+	
+	recursiveApplyTheme(gethui())
+	
+	-- Monitor for new GUI elements
+	local function monitorContainer(container)
+		container.DescendantAdded:Connect(function(descendant)
+			task.wait(0.1)
+			applyOrangeTheme(descendant)
+		end)
+		
+		for _, child in ipairs(container:GetDescendants()) do
+			applyOrangeTheme(child)
+		end
+	end
+	
+	-- Monitor PlayerGui
+	for _, player in ipairs(game:GetService('Players'):GetPlayers()) do
+		if player:FindFirstChild('PlayerGui') then
+			monitorContainer(player.PlayerGui)
+		end
+	end
+	
+	-- Monitor gethui
+	monitorContainer(gethui())
+	
+	-- Monitor new scripts/guis
+	game:GetService('Players').LocalPlayer.PlayerGui.DescendantAdded:Connect(function(descendant)
+		task.wait(0.1)
+		applyOrangeTheme(descendant)
+	end)
+end
+
+-- Global function to apply theme on demand
+getgenv().applyOrangeTheme = function()
+	setupUniversalTheme()
+end
+
+-- AUTO APPLY ON LOAD
+task.spawn(function()
+	task.wait(2)
+	setupUniversalTheme()
+	
+	-- Keep reapplying for persistent theme
+	while task.wait(5) do
+		pcall(setupUniversalTheme)
+	end
+end)
+
+local gui : ScreenGui = Instance.new('ScreenGui', gethui())
+gui.Enabled = not closet
+
+local stages = {
+	UDim2.new(0, 50, 1, 0),
+	UDim2.new(0, 100, 1, 0),
+	UDim2.new(0, 160, 1, 0),
+	UDim2.new(0, 200, 1, 0),
+	UDim2.new(0, 240, 1, 0)
+}
+
+local createinstance = function(class, properties)
+	local res = Instance.new(class)
+	
+	for property, value in properties do
+		res[property] = value
+	end
+
+	return res
+end
+
+local assetTable = {
+	['catrewrite/assets/loader/background.png'] = 'rbxassetid://93496634716737',
+	['catrewrite/assets/loader/exit.png'] = 'rbxassetid://110629770884920',
+	['catrewrite/assets/loader/exiticon.png'] = 'rbxassetid://128518278755224'
+}
+
+local function getAsset(v)
+	return assetTable[v] or ''
+end
+
+if gui.Enabled then
+	-- DREAMY ORANGE SKYBOX BACKGROUND --
+	local skybox = createinstance('Frame', {
+		Name = 'Skybox',
+		Parent = gui,
+		BackgroundColor3 = Color3.fromRGB(255, 140, 60),
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 0
+	})
+	
+	local skyGradient = Instance.new('UIGradient', skybox)
+	skyGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 120, 40)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 160, 80)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 30))
+	}
+	skyGradient.Rotation = 45
+	
+	-- HAZY GLOW EFFECT --
+	for i = 1, 3 do
+		local glow = createinstance('Frame', {
+			Name = 'Glow'..i,
+			Parent = skybox,
+			BackgroundColor3 = Color3.fromRGB(255, 180, 100),
+			BackgroundTransparency = 0.7,
+			BorderSizePixel = 0,
+			Position = UDim2.fromScale(math.random(20, 80) / 100, math.random(20, 80) / 100),
+			Size = UDim2.fromOffset(300 + i * 50, 300 + i * 50),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			ZIndex = 0
+		})
+		
+		local glowCorner = Instance.new('UICorner', glow)
+		glowCorner.CornerRadius = UDim.new(1, 0)
+		
+		-- Animate glow
+		task.spawn(function()
+			while glow.Parent do
+				tweenService:Create(glow, TweenInfo.new(4 + i, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+					BackgroundTransparency = 0.4 + i * 0.1,
+					Size = UDim2.fromOffset(250 + i * 60, 250 + i * 60)
+				}):Play()
+				task.wait(0.1)
+			end
+		end)
+	end
+
+	-- MAIN CONTAINER WITH ORANGE THEME --
+	local mainFrame = createinstance('Frame', {
+		Name = 'Main',
+		Parent = gui,
+		BackgroundColor3 = Color3.fromRGB(40, 25, 15),
+		BackgroundTransparency = 0.15,
+		Size = UDim2.fromOffset(685, 399),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BorderSizePixel = 0
+	})
+	
+	local mainCorner = Instance.new('UICorner', mainFrame)
+	mainCorner.CornerRadius = UDim.new(0, 12)
+	
+	-- ORANGE GLOW BORDER --
+	local borderGlow = Instance.new('UIStroke', mainFrame)
+	borderGlow.Color = Color3.fromRGB(255, 140, 60)
+	borderGlow.Thickness = 2
+	borderGlow.Transparency = 0.3
+	
+	-- Animate border glow
+	task.spawn(function()
+		while borderGlow.Parent do
+			tweenService:Create(borderGlow, TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+				Transparency = 0.1
+			}):Play()
+			task.wait(0.1)
+		end
+	end)
+
+	-- EXIT BUTTON --
+	createinstance('ImageButton', {
+		Name = 'Exit',
+		Parent = mainFrame,
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(624, 23),
+		Size = UDim2.fromOffset(40, 30),
+		AutoButtonColor = false,
+		ImageColor3 = Color3.fromRGB(255, 120, 50),
+		Image = 'rbxassetid://110629770884920',
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	createinstance('ImageLabel', {
+		Name = 'Icon',
+		Parent = mainFrame.Exit,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 10, 0.5, 0),
+		Size = UDim2.fromOffset(16, 16),
+		AnchorPoint = Vector2.new(0, 0.5),
+		ImageTransparency = 0.2,
+		ImageColor3 = Color3.fromRGB(255, 160, 80),
+		Image = 'rbxassetid://128518278755224',
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	-- MINIMIZE BUTTON --
+	createinstance('ImageButton', {
+		Name = 'Minimize',
+		Parent = mainFrame,
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(582, 23),
+		Size = UDim2.fromOffset(40, 30),
+		AutoButtonColor = false,
+		ImageColor3 = Color3.fromRGB(255, 120, 50),
+		Image = 'rbxassetid://133363055871405',
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	createinstance('ImageLabel', {
+		Name = 'Icon',
+		Parent = mainFrame.Minimize,
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 14, 0.5, 0),
+		Size = UDim2.fromOffset(16, 16),
+		AnchorPoint = Vector2.new(0, 0.5),
+		ImageTransparency = 0.2,
+		ImageColor3 = Color3.fromRGB(255, 160, 80),
+		Image = 'rbxassetid://83568668289707',
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	-- VAPE LOGO --
+	createinstance('ImageLabel', {
+		Name = 'textvape',
+		Parent = mainFrame,
+		AnchorPoint = Vector2.new(0.48, 0.31),
+		BackgroundTransparency = 1,
+		Position = UDim2.fromScale(0.48, 0.31),
+		Size = UDim2.fromOffset(70, 70),
+		Image = 'rbxassetid://84228868064393',
+		ImageColor3 = Color3.fromRGB(255, 140, 60),
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	createinstance('ImageLabel', {
+		Name = 'version',
+		Parent = mainFrame.textvape,
+		BackgroundTransparency = 1,
+		Position = UDim2.fromScale(1, 0.3),
+		Size = UDim2.fromOffset(29, 29),
+		Image = 'rbxassetid://138794287840926',
+		ImageColor3 = Color3.fromRGB(255, 180, 100),
+		ScaleType = Enum.ScaleType.Fit
+	})
+
+	-- LOAD BAR --
+	createinstance('Frame', {
+		Name = 'loadbar',
+		Parent = mainFrame,
+		AnchorPoint = Vector2.new(0.5, 0.53),
+		BackgroundColor3 = Color3.fromRGB(30, 20, 10),
+		BorderSizePixel = 0,
+		Position = UDim2.fromScale(0.5, 0.53),
+		Size = UDim2.fromOffset(240, 6)
+	})
+
+	createinstance('Frame', {
+		Name = 'fullbar',
+		Parent = mainFrame.loadbar,
+		BackgroundColor3 = Color3.fromRGB(255, 140, 60),
+		BorderSizePixel = 0,
+		Size = UDim2.new(0, 0, 1, 0),
+		ZIndex = 2
+	})
+	
+	-- PROGRESS BAR GLOW --
+	local barGlow = Instance.new('UIStroke', mainFrame.loadbar.fullbar)
+	barGlow.Color = Color3.fromRGB(255, 180, 100)
+	barGlow.Thickness = 1.5
+	barGlow.Transparency = 0.5
+
+	-- ACTION TEXT --
+	createinstance('TextLabel', {
+		Name = 'action',
+		Parent = mainFrame,
+		BackgroundTransparency = 1,
+		Position = UDim2.fromScale(0.353284657, 0.556391001),
+		Size = UDim2.fromOffset(200, 15),
+		Font = Enum.Font.Arial,
+		Text = '',
+		TextColor3 = Color3.fromRGB(255, 200, 150),
+		TextSize = 12,
+		TextTransparency = 0.2
+	})
+
+	Instance.new('UICorner', mainFrame.loadbar).CornerRadius = UDim.new(1, 0)
+	Instance.new('UICorner', mainFrame.loadbar.fullbar).CornerRadius = UDim.new(1, 0)
+	Instance.new('UIScale', mainFrame).Scale = math.max(gui.AbsoluteSize.X / 1920, 0.485)
+	
+	gui.Main = mainFrame
+end;
+
+getgenv().makestage = function(stage, package)
+	pcall(function()
+		tweenService:Create(gui.Main.loadbar.fullbar, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {
+			Size = stages[stage]
+		}):Play()
+		gui.Main.action.Text = package or ''
+	end)
+end
+
+local httpService = cloneref(game:GetService('HttpService'))
+
+local success, commitdata = pcall(function()
+    local commitinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/commits'))[1]
+    if commitinfo and type(commitinfo) == 'table' then
+        local fullinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/commits/'.. commitinfo.sha))
+        fullinfo.hash = commitinfo.sha:sub(1, 7)
+        return fullinfo
+    end
+end)
+
+if not success or typeof(commitdata) ~= 'table' or commitdata.sha == nil then
+	commitdata = {sha = 'main', files = {}}
+end
+
+writefile('catreset', 'True')
+
+local isfile = isfile or function(file)
+	local suc, res = pcall(function()
+		return readfile(file)
+	end)
+	return suc and res ~= nil and res ~= ''
+end
+local delfile = delfile or function(file)
+	writefile(file, '')
+end
+
+local function downloadFile(path, func)
+	if not isfile(path) then
+		local suc, res = pcall(function()
+			local subbed = path:gsub('catrewrite/', '')
+			subbed = subbed:gsub(' ', '%%20')
+			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('catrewrite/profiles/commit.txt')..'/'..subbed, true)
+		end)
+		if not suc or res == '404: Not Found' then
+			error(res)
+		end
+		if path:find('.lua') then
+			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
+		end
+		writefile(path, res)
+	end
+	return (func or readfile)(path)
+end
+
+local function wipeFolder(path)
+	if not isfolder(path) then return end
+	for _, file in listfiles(path) do
+		if file:find('loader') then continue end
+		if isfile(file) and select(1, readfile(file):find('--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.')) == 1 then
+			delfile(file)
+		end
+	end
+end 
+
+makestage(1, 'Downloading packages')
+
+for _, folder in {'catrewrite', 'catrewrite/communication', 'catrewrite/games', 'catrewrite/games/bedwars', 'catrewrite/profiles', 'catrewrite/assets', 'catrewrite/libraries', 'catrewrite/libraries/Enviroments', 'catrewrite/guis', 'catrewrite/libraries/Weather', 'catrewrite/libraries/LightningLib', 'catrewrite/libraries/LightningLib/Sparks'} do
+	if not isfolder(folder) then
+		makestage(1, `Downloading packages\n({folder:gsub('catrewrite', '')})`)
+		makefolder(folder)
+	end
+	task.wait(0.05)
+end
+
+makestage(2, 'Downloading required files')
+
+if not isfolder('catrewrite') or #listfiles('catrewrite') <= 6 or not isfolder('catrewrite/profiles') or not isfile('catrewrite/profiles/commit.txt') then
+    makefolder('catrewrite/profiles')
+    writefile('catrewrite/profiles/commit.txt', commitdata.sha)
+	if table.find({'Macsploit', 'Hydrogen'}, ({identifyexecutor()})[1]) then
+		getgenv().assexecutorhurtsmybutt = true
+	else
+ 		local req = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/profiles'))
+		for _, v in req do
+			if v.path ~= 'profiles/commit.txt' then
+				makestage(2, `Downloading required files\n({v.path})`)
+				downloadFile(`catrewrite/{v.path}`)
+			end
+		end
+		task.spawn(function()
+			local req = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/contents/translations'))
+			for _, v in req do
+				downloadFile(`catrewrite/{v.path}`)
+			end
+		end)
+	end
+end
+
+shared.VapeDeveloper = developer
+getgenv().used_init = true
+getgenv().catvapedev = developer
+getgenv().closet = closet
+
+if closet then
+	task.spawn(function()
+		repeat
+			for _, v in getconnections(game:GetService('LogService').MessageOut) do
+				v:Disable()
+			end
+
+			for _, v in getconnections(game:GetService('ScriptContext').Error) do
+				v:Disable()
+			end
+
+			task.wait(1)
+		until not getgenv().closet
+	end)
+end
+
+if not shared.VapeDeveloper then
+	local commit = commitdata.sha or 'main'
+	if commit == 'main' or (isfile('catrewrite/profiles/commit.txt') and readfile('catrewrite/profiles/commit.txt') or '') ~= commit then
+		wipeFolder('catrewrite')
+		wipeFolder('catrewrite/games')
+		wipeFolder('catrewrite/guis')
+		wipeFolder('catrewrite/libraries')
+	end
+    writefile('catrewrite/cheaters.json', '{}')
+	writefile('catrewrite/profiles/commit.txt', commit)
+end
+
+local success, err = pcall(function()
+	loadstring(downloadFile('catrewrite/main.lua'), 'main')()
+end)
+
+for _, v in gui:GetDescendants() do
+	for __, prop in {'BackgroundTransparency', 'ImageTransparency', 'TextTransparency'} do
+		task.spawn(pcall, function()
+			tweenService:Create(v, TweenInfo.new(1, Enum.EasingStyle.Quad), {
+				[prop] = 1
+			}):Play()
+		end)
+	end
+end
+
+if not success then
+	error('Failed to initalize catvape: '.. err, 8)
+elseif not closet then
+	loadstring(downloadFile('catrewrite/libraries/announcements.lua'), 'announcements.lua')()
+end
+
+-- NOTIFICATION: Theme Applied
+game:GetService('StarterGui'):SetCore('SendNotification', {
+	Title = '🍊 Orange Theme Active',
+	Text = 'Universal orange theme injected! All future GUIs will be orange.',
+	Duration = 5
+})
